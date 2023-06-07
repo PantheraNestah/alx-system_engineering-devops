@@ -1,2 +1,2 @@
 #!/bin/bash
-rsync -av --ignore-existing ./*.html ..
+rsync -au --ignore-existing --include='*.html' --exclude='*' ./ ../
