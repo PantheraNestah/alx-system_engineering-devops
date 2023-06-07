@@ -1,2 +1,2 @@
 #!/bin/bash
-yes|cp -ruv ./*html ../
+yes|cp -uv ./*html ../
