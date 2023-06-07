@@ -4,3 +4,4 @@
 3-listfiles - does a long listing of present working directory
 4-listmorefiles - lists files and subdirectories of pwd including hidden files
 5-listfilesdigitonly - long lists the current working directory displaying UID's
+6-firstdirectory - creates the directory my_first_directory in the tmp directory
