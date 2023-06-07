@@ -1,2 +1,2 @@
 #!/bin/bash
-rsync --progress -rutp ./*.html ../
+rsync -av -ignore-existing ./*.html ../
