@@ -11,3 +11,4 @@
 10-back - changes working directory to previous
 11-lists - list . .. and the /boot directory in long format
 12-file_type - prints typte of /tmp/iamafile
+13-symbolic_link - creates a symbolic link to the /bin/ls
