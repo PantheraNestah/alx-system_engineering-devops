@@ -12,3 +12,6 @@
 11-directories_permissions - adds execute permissions to all subdirectories of PWD for everybody
 12-directory_permissions - creates a my_dir directory and sets it's permissions to 751 with one comand
 13-change_group - changes the group owner of the file hello to school
+100-change_owner_and_group - changes owner and group to vincent and staff respectively
+101-symbolic_link_permissions - changes permissions of symbolic link _hello
+102-if_only - changes ownership of file hello only if it is owned by guillaume
