@@ -1,0 +1,2 @@
+#!/bin/bash
+nl -n ln -w1 | grep '1$' | cut -f2-
