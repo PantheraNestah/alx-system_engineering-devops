@@ -1,0 +1,2 @@
+#!/bin/bash
+cut -f 1 /var/log/apache2/access.log | sort | uniq -c | sort -nr | head -n 11
