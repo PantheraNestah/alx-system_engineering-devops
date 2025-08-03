@@ -1,0 +1,3 @@
+#!/bin/bash
+printf "%s\n" "$(printf "%o" "$((5#$(tr 'water' '01234'<<<"$WATER")+4#$(tr 'ti.r' '0123'<<<"$STIR") ))"|tr '01234567' 'shtbeolc')"
+
