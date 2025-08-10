@@ -1,0 +1,137 @@
+# 2. Secured and Monitored Web Infrastructure
+
+## Scenario: Hosting `www.foobar.com` on a Secured and Monitored 3-Server Setup
+
+This setup is a continuation of the distributed infrastructure.  
+It is **secured** (firewalls, HTTPS) and **monitored** (monitoring clients on each server).
+
+---
+
+## Whiteboard Diagram
+
+User (Browser)
+   |
+   | 1. Requests https://www.foobar.com
+   v
++--------------------------+
+|        DNS System        |
+| (A record: www -> LB IP) |
++--------------------------+
+   |
+   v
++----------------------------------------+
+| Server #1: Load Balancer (HAProxy)     |
+|  - Firewall #1 (host-based + network)  |
+|  - SSL Certificate for www.foobar.com  |
+|  - TLS termination (or passthrough)    |
+|  - Monitoring client #1 (agent)        |
++----------------------------------------+
+           |                   |
+           | (distributes)     | (distributes)
+           v                   v
++----------------+     +----------------+
+| Server #2      |     | Server #3      |
+| - Firewall #2  |     | - Firewall #3  |
+| - Nginx (web)  |     | - Nginx (web)  |
+| - App server   |     | - App server   |
+| - App files    |     | - App files    |
+| - Monitoring   |     | - Monitoring   |
++----------------+     +----------------+
+           |                   |
+           |                   |
+           +---------+---------+
+                     |
+                     v
+          +------------------------+
+          |   Database (MySQL)     |
+          |   - Primary (on one    |
+          |     of the servers)*   |
+          |   - Replica(s) (if any)|
+          +------------------------+
+
+* With 3 servers we typically place MySQL on Server #3 (or on a dedicated DB VM if available).
+
+
+---
+
+## Added Components and Why
+
+### **Firewalls (3 total)**
+- **Purpose**: Restrict inbound/outbound traffic to only necessary ports and sources.
+- Protects from unauthorized access.
+- One firewall per server for layered security.
+
+### **SSL Certificate (1)**
+- Installed on the load balancer (or end-to-end to each backend).
+- **Purpose**: Encrypt client ↔ server traffic to prevent data interception.
+
+### **Monitoring Clients (3 total)**
+- Installed on each server.
+- **Purpose**: Collect metrics, logs, and traces for visibility into system health and performance.
+
+---
+
+## Firewalls — Role
+- Control network traffic based on rules.
+- Allow only necessary services (e.g., 443 for HTTPS, DB port only from app servers).
+- Reduce attack surface.
+
+---
+
+## Why HTTPS
+- Encrypts all data in transit (e.g., credentials, cookies, personal data).
+- Prevents eavesdropping and tampering.
+- Required for modern web features and improves SEO.
+
+---
+
+## Monitoring — Purpose
+- Detect downtime or performance issues.
+- Track system and application metrics.
+- Enable capacity planning and incident investigation.
+
+---
+
+## How Monitoring Collects Data
+- Agents on each server collect:
+  - **Metrics**: CPU, memory, disk, QPS from Nginx, DB stats.
+  - **Logs**: Web server logs, application logs, DB logs.
+  - **Traces**: Optional, for request flow.
+- Data is sent to a central monitoring service (e.g., Sumo Logic, Datadog, Prometheus).
+
+---
+
+## How to Monitor Web Server QPS
+1. Enable Nginx metrics (`stub_status` or Prometheus exporter).
+2. Collect metrics via agent or scrape.
+3. Calculate QPS:
+   - Prometheus: `increase(nginx_http_requests_total[1m])`
+4. Visualize in dashboard and set alerts for abnormal spikes.
+
+---
+
+## Issues With This Infrastructure
+
+### 1. SSL Termination at Load Balancer
+- **Issue**: Internal traffic LB → backend is unencrypted if not re-encrypted.
+- **Mitigation**: Use end-to-end TLS or mTLS internally.
+
+### 2. Single MySQL Primary for Writes
+- **Issue**: Primary DB is a single point of failure for writes.
+- **Mitigation**: Add automatic failover or multi-primary cluster.
+
+### 3. Servers With All Components (DB, Web, App)
+- **Issue**:
+  - Resource contention between components.
+  - Scaling mismatch between tiers.
+  - Larger blast radius for incidents.
+- **Mitigation**: Separate roles onto dedicated nodes where possible.
+
+---
+
+## Recommendations
+- Add redundant load balancer to remove SPOF.
+- Use HTTPS for LB ↔ backend communication.
+- Implement automated DB failover.
+- Set up alerts for high error rate, replication lag, high CPU usage.
+
