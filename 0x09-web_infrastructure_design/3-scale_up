@@ -1,0 +1,117 @@
+# 3. Scale Up — Application Server vs Web Server
+
+## Scenario
+
+We want to **scale up** our infrastructure by:
+- Splitting the web server, application server, and database onto **separate servers**.
+- Adding a **second load balancer** and configuring them in a **cluster** for high availability.
+
+---
+
+## Whiteboard Diagram
+
+User (Browser)
+|
+| Requests www.foobar.com
+v
++--------------------------+
+| DNS System |
+| (A record: www -> LB VIP)|
++--------------------------+
+|
+v
++-------------------------------------+
+| Load Balancer #1 (HAProxy) |
+| Clustered with Load Balancer #2 |
++-------------------------------------+
+| |
+| |
+v v
++-------------+ +-------------+
+| Web Server | | Web Server |
+| (Nginx) | | (Nginx) |
++-------------+ +-------------+
+| |
++---------+---------+
+|
+v
++-----------------+
+| App Server |
+| (Gunicorn, PHP) |
++-----------------+
+|
+v
++-----------------+
+| Database Server |
+| (MySQL) |
++-----------------+
+
+
+
+---
+
+## Components
+
+### **Server 1 — Load Balancer #1 (HAProxy)**
+- **Purpose**: Distributes traffic to multiple web servers for load sharing.
+- **Why**: Prevents overloading a single web server, improves fault tolerance.
+- **Clustered with Load Balancer #2**: High Availability (HA) — if one fails, the other continues serving traffic.
+
+### **Server 2 — Load Balancer #2 (HAProxy)**
+- **Purpose**: Redundant load balancer in active/passive or active/active cluster.
+- **Why**: Eliminates the load balancer as a single point of failure.
+
+### **Server 3 — Web Server (Nginx)**
+- **Purpose**: Serves static files (HTML, CSS, JS, images).
+- **Why**: Offloads static content serving from application servers.
+
+### **Server 4 — Application Server**
+- **Purpose**: Runs dynamic application code (PHP, Python, Ruby, etc.).
+- **Why**: Separating it from the web server improves performance and scalability.
+
+### **Server 5 — Database Server (MySQL)**
+- **Purpose**: Stores persistent application data.
+- **Why**: Dedicated DB server improves security and allows independent scaling.
+
+---
+
+## Why This Split Improves Infrastructure
+
+1. **Performance**:  
+   - Static content served quickly by web servers.  
+   - Dynamic code handled by application servers.  
+   - Database queries run on dedicated hardware.
+
+2. **Scalability**:  
+   - Add more web or app servers without touching the DB server.  
+   - Load balancers distribute traffic efficiently.
+
+3. **Reliability**:  
+   - Redundant load balancers prevent a single point of failure.  
+   - Each tier can fail independently without full system outage.
+
+---
+
+## Key Notes on Load Balancer Clustering
+
+- **Active-Active**: Both load balancers handle traffic simultaneously.  
+- **Active-Passive**: One handles traffic, the other waits in standby and takes over if needed.  
+- Uses a **shared virtual IP (VIP)** so DNS always points to the cluster.
+
+---
+
+## Additional Element Explanations
+
+- **Load Balancer Cluster**: Improves availability — traffic is never stopped by a single LB failure.
+- **Separate Web Server**: Optimized for static content, reduces load on app servers.
+- **Separate Application Server**: Dedicated to executing code, can be scaled independently.
+- **Separate Database Server**: Improves performance, security, and scalability.
+
+---
+
+## Summary
+This design creates a modular, scalable, and highly available infrastructure by:
+- Using **two load balancers in a cluster**.
+- Splitting **web**, **app**, and **database** tiers onto their own servers.
+- Allowing independent scaling and reduced single points of failure.
+
