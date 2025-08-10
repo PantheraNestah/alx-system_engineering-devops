@@ -1,0 +1,125 @@
+# 1. Distributed Web Infrastructure
+
+## Scenario: User Wants to Access `www.foobar.com`
+
+1. **User types** `www.foobar.com` in their browser.
+2. **DNS** resolves `www` to the IP address of the **Load Balancer**.
+3. The **HAProxy Load Balancer** decides which backend server to send the request to using the configured distribution algorithm.
+4. The chosen **Web Server (Nginx)** forwards dynamic requests to the **Application Server**, which processes code and queries the database.
+5. The **Database** is a **Primary-Replica cluster**:
+   - **Primary (Master)** handles all writes and updates.
+   - **Replica (Slave)** handles read-only queries to reduce load on the primary.
+6. The response flows back to the user through the **Load Balancer**.
+
+---
+
+## Infrastructure Diagram
+
+
+User (Browser)
+   |
+   | 1. Requests www.foobar.com
+   v
++--------------------------+
+|         DNS System       |
+| (A record: www -> LB IP) |
++--------------------------+
+   |
+   v
++----------------------------------+
+|   Load Balancer (HAProxy)        |
+|  - Distributes traffic           |
+|  - Algorithm: Round Robin        |
++----------------------------------+
+   |                  |
+   |                  |
+   v                  v
++----------------+  +----------------+
+| Server #1      |  | Server #2      |
+| [Nginx]        |  | [Nginx]        |
+| [App Server]   |  | [App Server]   |
+| [App Files]    |  | [App Files]    |
++----------------+  +----------------+
+         |                   |
+         +---------+---------+
+                   |
+                   v
+        +------------------------+
+        |  Database Cluster      |
+        |  Primary (Master)      |
+        |   - All writes/updates |
+        |                        |
+        |  Replica (Slave)       |
+        |   - Read-only queries  |
+        +------------------------+
+
+
+
+---
+
+## Why Each Additional Element is Added
+
+### **Load Balancer (HAProxy)**
+- Distributes traffic between servers to prevent overloading one machine and to allow redundancy.
+- Without it, if one server is down, users get errors.
+
+### **Second Server**
+- Provides high availability and allows load sharing for better performance.
+
+### **Primary-Replica Database**
+- Reduces the load on a single database by splitting reads and writes.
+- Adds redundancy for failover in case the primary fails.
+
+---
+
+## Distribution Algorithm: Round Robin
+- The load balancer assigns each new incoming connection to the next server in the list in order, looping back to the first after the last.
+- Example:  
+  Request 1 → Server #1  
+  Request 2 → Server #2  
+  Request 3 → Server #1  
+  etc.
+
+---
+
+## Active-Active vs Active-Passive
+
+**Active-Active (used here)**:
+- Both servers are actively handling requests at the same time.
+- Improves performance and load handling.
+
+**Active-Passive**:
+- One server is active, the other is idle in standby mode and only takes over if the active one fails.
+
+---
+
+## Primary-Replica (Master-Slave) Database Cluster
+
+**Primary (Master)**:
+- Handles all write operations (INSERT, UPDATE, DELETE) and can also handle reads if needed.
+
+**Replica (Slave)**:
+- Handles read-only queries.
+- Replicates data from the primary asynchronously or semi-synchronously.
+
+---
+
+## Differences Between Primary and Replica in the Application
+- **Primary**: Application sends all data modifications here.
+- **Replica**: Application sends read queries here to reduce load on primary.  
+  *(The application code or ORM usually determines which DB to query.)*
+
+---
+
+## Issues With This Infrastructure
+
+### **SPOF (Single Point of Failure)**
+- Load balancer is a SPOF — if it fails, the whole site goes down.
+- Database primary is a SPOF for write operations.
+
+### **Security Issues**
+- No firewall to restrict unwanted access.
+- No HTTPS → traffic is unencrypted, vulnerable to eavesdropping.
+
+### **No Monitoring**
+- No way to detect failures, slow queries, or high CPU usage in real time.
