@@ -1,0 +1,94 @@
+User (Browser)
+   |
+   | 1. Requests www.foobar.com
+   v
++--------------------------+
+|        DNS System        |
+|(A record: www -> 8.8.8.8)|
++--------------------------+
+   |
+   | 2. Resolves to 8.8.8.8
+   v
++---------------------------------------------------+
+|                 Single Server (8.8.8.8)           |
+|---------------------------------------------------|
+| [Nginx - Web Server]                              |
+|   - Receives HTTP/HTTPS requests                  |
+|   - Serves static files                           |
+|   - Passes dynamic requests to Application Server |
+|---------------------------------------------------|
+| [Application Server]                              |
+|   - Runs backend code (PHP, Python, etc.)         |
+|   - Processes business logic                      |
+|   - Loads application files                       |
+|---------------------------------------------------|
+| [Application Files]                               |
+|   - Your codebase: HTML, PHP, Python, assets      |
+|---------------------------------------------------|
+| [MySQL Database]                                  |
+|   - Stores user data, content, configurations     |
+|---------------------------------------------------|
++---------------------------------------------------+
+   |
+   | 3. Sends response (HTML, JSON, etc.)
+   v
+User's Browser displays website
+
+Component Roles
+Server:
+A physical or virtual machine that hosts all the components (web server, app server, code, database) and responds to incoming requests.
+
+Domain Name (foobar.com):
+A human-friendly address mapped to your server’s IP. Makes it easier to remember than an IP address.
+
+DNS Record for www in www.foobar.com:
+This is a CNAME or A record depending on configuration. In this setup, www is usually an A record pointing directly to 8.8.8.8.
+
+Web Server (Nginx):
+Receives HTTP requests from users and serves static files directly, or forwards dynamic requests to the application server.
+
+Application Server:
+Runs your application code (PHP, Python, Ruby, etc.), processes business logic, and handles dynamic content generation.
+
+Application Files:
+Your codebase — HTML templates, backend scripts, configuration, and assets that define how the website works.
+
+Database (MySQL):
+Stores and retrieves structured data for the application (e.g., user accounts, blog posts).
+
+Communication with the User’s Computer:
+Uses HTTP or HTTPS protocols over TCP/IP to deliver the content.
+
+Issues with This Infrastructure
+Single Point of Failure (SPOF):
+If the server fails, the entire website goes offline because everything is on one machine.
+
+Downtime During Maintenance:
+Deploying new code or restarting Nginx/app server causes temporary unavailability.
+
+Scalability Limits:
+Cannot handle large amounts of traffic — adding more visitors will overwhelm CPU, RAM, and network bandwidth.
+
+A user opens their browser and types:
+www.foobar.com
+
+The browser asks the DNS system:
+“What’s the IP for www.foobar.com?”
+
+DNS responds:
+8.8.8.8
+
+The browser sends an HTTP request to 8.8.8.8 (your server’s public IP).
+
+Your Nginx web server on that machine receives the request and passes it to the application server.
+
+The application server executes the code in your application files.
+
+The application queries your MySQL database if needed.
+
+The database returns the requested data to the application server.
+
+The application server builds the response (HTML, JSON, etc.) and sends it to Nginx.
+
+Nginx sends the final response back to the user’s browser over the internet.
+
