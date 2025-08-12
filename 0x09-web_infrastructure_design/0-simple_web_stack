@@ -1,94 +1,77 @@
-User (Browser)
-   |
-   | 1. Requests www.foobar.com
-   v
-+--------------------------+
-|        DNS System        |
-|(A record: www -> 8.8.8.8)|
-+--------------------------+
-   |
-   | 2. Resolves to 8.8.8.8
-   v
-+---------------------------------------------------+
-|                 Single Server (8.8.8.8)           |
-|---------------------------------------------------|
-| [Nginx - Web Server]                              |
-|   - Receives HTTP/HTTPS requests                  |
-|   - Serves static files                           |
-|   - Passes dynamic requests to Application Server |
-|---------------------------------------------------|
-| [Application Server]                              |
-|   - Runs backend code (PHP, Python, etc.)         |
-|   - Processes business logic                      |
-|   - Loads application files                       |
-|---------------------------------------------------|
-| [Application Files]                               |
-|   - Your codebase: HTML, PHP, Python, assets      |
-|---------------------------------------------------|
-| [MySQL Database]                                  |
-|   - Stores user data, content, configurations     |
-|---------------------------------------------------|
-+---------------------------------------------------+
-   |
-   | 3. Sends response (HTML, JSON, etc.)
-   v
-User's Browser displays website
+## Designing a Simple Web Stack: A Single-Server Approach
 
-Component Roles
-Server:
-A physical or virtual machine that hosts all the components (web server, app server, code, database) and responds to incoming requests.
 
-Domain Name (foobar.com):
-A human-friendly address mapped to your server’s IP. Makes it easier to remember than an IP address.
+```
++-----------------------------------------------------+
+|                     User's Computer                 |
+|      +-----------------------------------------+    |
+|      |              Web Browser                |    |
+|      +-----------------------------------------+    |
++----------------------|------------------------------+
+                       | 1. User types www.foobar.com
+                       |
++----------------------v------------------------------+
+|                   The Internet                      |
+|                                                     |
+|  2. DNS Resolution: www.foobar.com -> 8.8.8.8       |
+|                                                     |
++----------------------|------------------------------+
+                       | 3. HTTP Request
+                       |
++----------------------v------------------------------+
+|                     Your Server (IP: 8.8.8.8)       |
+|                                                     |
+|  +-------------------+  +------------------------+  |
+|  |    Web Server     |  |  Application Server    |  |
+|  |      (Nginx)      |  |                        |  |
+|  +--------|----------+  +-----------|------------+  |
+|           | 4. Handles Request       | 5. Executes Code |
+|           |                          |                |
+|  +--------v----------+  +------------v-----------+  |
+|  | Application Files |  |      Database          |  |
+|  |   (Your Code)     |  |       (MySQL)          |  |
+|  +-------------------+  +------------------------+  |
+|           | 6. Returns Content to Web Server     |  |
+|           |                                      |  |
+|           +--------------------------------------+  |
+|                                                     |
+|  7. HTTP Response to User's Browser                 |
++-----------------------------------------------------+
+```
 
-DNS Record for www in www.foobar.com:
-This is a CNAME or A record depending on configuration. In this setup, www is usually an A record pointing directly to 8.8.8.8.
+### Understanding the Infrastructure Components
 
-Web Server (Nginx):
-Receives HTTP requests from users and serves static files directly, or forwards dynamic requests to the application server.
+Let's break down the role of each component in this setup:
 
-Application Server:
-Runs your application code (PHP, Python, Ruby, etc.), processes business logic, and handles dynamic content generation.
+**What is a server?**
+A server is a powerful computer, either physical or virtual, that provides data, services, or programs to other computers, known as clients, over a network. In our case, the server is the single machine that stores all the necessary files and software to run your website.
 
-Application Files:
-Your codebase — HTML templates, backend scripts, configuration, and assets that define how the website works.
+**What is the role of the domain name?**
+A domain name, like `www.foobar.com`, is the human-friendly address for your website. It acts as a memorable identifier that users can type into their browser, saving them from having to remember a complex numerical IP address. It's a crucial part of your online identity and brand.
 
-Database (MySQL):
-Stores and retrieves structured data for the application (e.g., user accounts, blog posts).
+**What type of DNS record is `www` in `www.foobar.com`?**
+The `www` in `www.foobar.com` is typically a **CNAME (Canonical Name) record** or an **A record**.
+*   An **A record** directly maps a domain name to an IPv4 address.
+*   A **CNAME record** acts as an alias, pointing one domain name to another. For instance, `www.foobar.com` could be a CNAME pointing to `foobar.com`. This is a common practice to ensure that both addresses lead to the same website.
 
-Communication with the User’s Computer:
-Uses HTTP or HTTPS protocols over TCP/IP to deliver the content.
+**What is the role of the web server (Nginx)?**
+The web server, in this case, Nginx, is the software that receives incoming HTTP requests from users' browsers. Its primary role is to serve static content like HTML pages, CSS stylesheets, and images directly to the user. For dynamic content, it acts as a reverse proxy, forwarding the request to the application server.
 
-Issues with This Infrastructure
-Single Point of Failure (SPOF):
-If the server fails, the entire website goes offline because everything is on one machine.
+**What is the role of the application server?**
+The application server is responsible for executing the application's business logic. It processes user requests that require more than just serving a static file. For example, if a user fills out a contact form or logs into an account, the application server processes this information, interacts with the database, and generates dynamic content to be sent back to the user.
 
-Downtime During Maintenance:
-Deploying new code or restarting Nginx/app server causes temporary unavailability.
+**What is the role of the database (MySQL)?**
+The database, here MySQL, is where all the website's dynamic data is stored and managed in an organized way. This includes user information, blog posts, product details, and any other information that needs to be persisted and can change over time. The application server queries the database to retrieve or update this information as needed.
 
-Scalability Limits:
-Cannot handle large amounts of traffic — adding more visitors will overwhelm CPU, RAM, and network bandwidth.
+**What is the server using to communicate with the computer of the user requesting the website?**
+The server communicates with the user's computer using the **Hypertext Transfer Protocol (HTTP)** or its secure version, **HTTPS**. This communication follows a client-server model, where the user's web browser (the client) sends an HTTP request to the server, and the server sends back an HTTP response containing the requested webpage content.
 
-A user opens their browser and types:
-www.foobar.com
+### The Inherent Flaws of a Single-Server Infrastructure
 
-The browser asks the DNS system:
-“What’s the IP for www.foobar.com?”
+While simple and cost-effective, this single-server setup has significant drawbacks:
 
-DNS responds:
-8.8.8.8
+*   **Single Point of Failure (SPOF):** If any component on the single server fails—be it the hardware, the web server software, the application server, or the database—the entire website goes down. There is no redundancy to take over in case of a failure.
 
-The browser sends an HTTP request to 8.8.8.8 (your server’s public IP).
+*   **Downtime During Maintenance:** When you need to perform maintenance, such as deploying new code or applying security patches that require a server restart, your website will be unavailable to users. This can lead to a poor user experience and potential loss of business. Strategies like zero-downtime deployment, which involve more complex infrastructures, are not feasible with a single server.
 
-Your Nginx web server on that machine receives the request and passes it to the application server.
-
-The application server executes the code in your application files.
-
-The application queries your MySQL database if needed.
-
-The database returns the requested data to the application server.
-
-The application server builds the response (HTML, JSON, etc.) and sends it to Nginx.
-
-Nginx sends the final response back to the user’s browser over the internet.
-
+*   **Inability to Scale with High Traffic:** A single server has finite resources (CPU, RAM, storage). As incoming traffic increases, the server can become overwhelmed, leading to slow performance or even crashing. This architecture cannot easily handle a surge in users. Scaling options are limited to "vertical scaling," which means adding more resources to the existing server, a solution that has its own physical and cost limitations.
